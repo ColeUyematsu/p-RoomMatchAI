@@ -1,10 +1,9 @@
 from sklearn.cluster import KMeans
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
+
 
 # test data set I made with random values (1,10) to test algo: https://docs.google.com/spreadsheets/d/1tAulqumt2PWFjt_YMrY5-pIrCALC4AED8Ef0D9Rq_aU/edit?usp=sharing
 data = pd.read_csv("test.csv") # reads converts the CSV -> Pandas DF
