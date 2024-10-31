@@ -1,11 +1,11 @@
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.preprocessing import StandardScaler, normalize
 from scipy.spatial.distance import pdist, squareform
 import scipy.cluster.hierarchy as shc
+import re
 
 X = pd.read_csv("test.csv")
 names = X['NAME']
@@ -47,7 +47,9 @@ for cluster_id, members in clusters.items():
 
 for person in sorted(top_matches.keys(), key=lambda x: int(x.split('_')[1])):
     matches = top_matches[person]
-    print(f"Top matches for {person}: {', '.join(matches)}")
+    person_num = re.sub(r"Person_", "", person)
+    match_nums = [re.sub(r"Person_", "", match) for match in matches]
+    print(f"{person_num}: {', '.join(match_nums)}")
 
 plt.figure(figsize=(8, 8))
 plt.scatter(X_principal['P1'], X_principal['P2'], c=labels_20, cmap='tab20', s=50)
