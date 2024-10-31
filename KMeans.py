@@ -3,69 +3,32 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
 
+data = pd.read_csv("test.csv")
+X = data.to_numpy()[:,:-1]
 
-# test data set I made with random values (1,10) to test algo: https://docs.google.com/spreadsheets/d/1tAulqumt2PWFjt_YMrY5-pIrCALC4AED8Ef0D9Rq_aU/edit?usp=sharing
-data = pd.read_csv("test.csv") # reads converts the CSV -> Pandas DF
-X = data.to_numpy()[:,1:].T # on assumption that each question is a row, each column is a person
+### Unscaled
+# note: maybe can use this algo to get the clusters, then within each cluster use KNN to get 5 best matches?
+scaledX = StandardScaler().fit_transform(X)
+kmeans = KMeans(n_clusters=5, random_state=0, n_init="auto").fit(scaledX)
+clusters = kmeans.cluster_centers_
 
+plt.scatter(scaledX[:,0],scaledX[:,1],c="blue")
+plt.scatter(clusters[:,0],clusters[:,1],c="orange")
 
-pca = PCA(n_components=2)
+y_preds = kmeans.predict(scaledX)
 
-
-### PCA Projected (i tried it unprojected, can change it back if projecting is unncessary)
-'''Fitting the data to our model'''
-scaledX = StandardScaler().fit_transform(X) # first scale the data
-projectedX = pca.fit_transform(scaledX) # project PCA
-kmeans = KMeans(n_clusters=5, random_state=0, n_init="auto").fit(projectedX) # fit kmeans algo. to projected data
-
-
-clusters = kmeans.cluster_centers_ # our cluster centers
-
-
-'''Graphing our data and cluster points'''
-plt.scatter(projectedX[:,0],scaledX[:,1],c="green")
-plt.scatter(clusters[:,0],clusters[:,1],c="red")
-
-
-y_preds = kmeans.predict(projectedX) # sorting each person to a cluster
-headers = data.columns.tolist()[1:] # each user in order
-
+headers = data.iloc[:, -1].tolist()
 
 clusters_dict = {i: [] for i in range(5)}  # Creating a dictionary for clusters
 
+for i, pred in enumerate(y_preds):
+    clusters_dict[pred].append(headers[i])
 
-'''Sorts each user to their group based on cluster'''
-for i in range(len(y_preds)):
-    clusters_dict[y_preds[i]].append(headers[i])
-
-
-'''Print grouped users'''
+# Print grouped users
 for cluster_id, users in clusters_dict.items():
     print(f"Group {cluster_id + 1}: {users}")
-
-
-'''Unprojected -- Maybe better? (NOTE: they have different results)'''
-# scaledX = StandardScaler().fit_transform(X)
-# kmeans = KMeans(n_clusters=5, random_state=0, n_init="auto").fit(scaledX)
-# clusters = kmeans.cluster_centers_
-
-# plt.scatter(scaledX[:,0],scaledX[:,1],c="blue")
-# plt.scatter(clusters[:,0],clusters[:,1],c="orange")
-
-# y_preds = kmeans.predict(scaledX)
-
-# headers = data.columns.tolist()[1:] # each user in order
-
-# clusters_dict = {i: [] for i in range(5)}  # Creating a dictionary for clusters
-
-# for i in range(len(y_preds)):
-#     clusters_dict[y_preds[i]].append(headers[i])
-
-# # Print grouped users
-# for cluster_id, users in clusters_dict.items():
-#     print(f"Group {cluster_id + 1}: {users}")
-
 
 plt.show()
 
