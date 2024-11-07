@@ -24,6 +24,7 @@ plt.figure(figsize=(12, 8))
 plt.title('Dendrogram for Roommate Preferences (20 Clusters)')
 dendrogram = shc.dendrogram(shc.linkage(X_principal, method='ward'))
 
+# Agglomerative Clustering
 ac20 = AgglomerativeClustering(n_clusters=20)
 labels_20 = ac20.fit_predict(X_normalized)
 
@@ -34,22 +35,38 @@ clusters = {i: [] for i in range(20)}
 for label, name in zip(labels_20, names):
     clusters[label].append(name)
 
-top_matches = {}
+output_data = {}
+
 for cluster_id, members in clusters.items():
     if len(members) > 1:
         indices = [names[names == member].index[0] for member in members]
         cluster_data = X_normalized.iloc[indices].to_numpy()
         distances = squareform(pdist(cluster_data, metric='euclidean'))
+        
+        max_distance = distances.max()
+        similarity_scores = 1 - (distances / max_distance)
+        
         for i, person_index in enumerate(indices):
             person_name = names[person_index]
             closest_indices = distances[i].argsort()[1:6]
-            top_matches[person_name] = [members[j] for j in closest_indices]
+            raw_scores = [similarity_scores[i, j] for j in closest_indices]
+            
+            min_score = min(raw_scores)
+            max_score = max(raw_scores)
+            adjusted_scores = [
+                0.5 + (score - min_score) ** 0.7 / (max_score - min_score) ** 0.7 * 0.5
+                for score in raw_scores
+            ]
+            
+            matches = ", ".join(f"{members[j]} (score: {round(adjusted_scores[k], 2)})"
+                                for k, j in enumerate(closest_indices))
+            
+            output_data[person_name] = matches
 
-for person in sorted(top_matches.keys(), key=lambda x: int(x.split('_')[1])):
-    matches = top_matches[person]
-    person_num = re.sub(r"Person_", "", person)
-    match_nums = [re.sub(r"Person_", "", match) for match in matches]
-    print(f"{person_num}: {', '.join(match_nums)}")
+output_df = pd.DataFrame(list(output_data.items()), columns=['Person', 'Top Matches'])
+output_df.to_csv("Agglomerative_matches.csv", index=False)
+
+print("Top matches with adjusted scores saved to 'top_matches_grouped.csv'.")
 
 plt.figure(figsize=(8, 8))
 plt.scatter(X_principal['P1'], X_principal['P2'], c=labels_20, cmap='tab20', s=50)
